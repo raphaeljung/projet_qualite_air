@@ -1,9 +1,8 @@
-# projet_qualite_air
+# Projet qualité de l'air
 
-Notre projet a pour but de mettre d'analyser la situation de la qualité de l'air dans la région PACA. 
+Notre projet a pour but de mettre d'analyser la situation de la qualité de l'air dans la Région Sud. Il présente : 
 
-- Un dashboard (datavisualisation) de la situation en matière de qualité de l’air sur la Région Sud. 
+- Un dashboard permettant de visualiser l'évolution des indicateurs de la qualité de l'air en fonction des sources d'emmissions. 
 
-- Un modèle en projection à plus long terme (machine learning) compte tenu
-d’actions permettant le maintien positif ou l’amélioration des résultats, au-delà du
-confinement.
+- Un modèle d'analyse des determinants de la qualité de l'air et de prédiction de son évolution.
+
