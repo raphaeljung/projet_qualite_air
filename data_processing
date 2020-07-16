@@ -1,5 +1,6 @@
 def create_key(data_frame):
   """Cette fonction prend une dataframe et crée une colonne clee à partir des information dans la colonne [nom_station]."""
+  
   row_Berre_Etang=data_frame[data_frame["nom_station"]=="Berre l'Etang"].index
   data_frame.loc[row_Berre_Etang,"CLEE"]="BETG"  
 
