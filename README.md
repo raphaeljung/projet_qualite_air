@@ -1,6 +1,6 @@
 # projet_qualite_air
 
-Notre projet a pour but de mettre en exergue l'influence du climat sur la qualité de l'air. 
+Notre projet a pour but de mettre d'analyser la situation de la qualité de l'air dans la région PACA. 
 
 - Un dashboard (datavisualisation) de la situation en matière de qualité de l’air sur la Région Sud. 
 
