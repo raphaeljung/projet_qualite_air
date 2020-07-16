@@ -1,0 +1,194 @@
+def create_key(data_frame):
+  """Cette fonction prend une dataframe et crée une colonne clee à partir des information dans la colonne [nom_station]."""
+  row_Berre_Etang=data_frame[data_frame["nom_station"]=="Berre l'Etang"].index
+  data_frame.loc[row_Berre_Etang,"CLEE"]="BETG"  
+
+  row_Chateauneuf=data_frame[data_frame["nom_station"]=="Chateauneuf"].index
+  data_frame.loc[row_Chateauneuf,"CLEE"]="CHNF"
+
+  row_Martigues_Central=data_frame[data_frame["nom_station"]=="Martigues P. Central"].index
+  data_frame.loc[row_Martigues_Central,"CLEE"]="Martigues P. Central"
+
+  row_Martigue_Ile=data_frame[data_frame["nom_station"]=="Martigues l'Ile"].index
+  data_frame.loc[row_Martigue_Ile,"CLEE"]="MILE - NOX Martigues L'Ile microg/m3"
+
+  row_Aeropo_Nice=data_frame[data_frame["nom_station"]=="AEROPORT NICE"].index
+  data_frame.loc[row_Aeropo_Nice,"CLEE"]="AEROPO"
+
+  row_Aix_Arts=data_frame[data_frame["nom_station"]=="AIX CENTRE ECOLE ART"].index
+  data_frame.loc[row_Aix_Arts,"CLEE"]="AIXART"
+
+
+  row_Aix_Centre=data_frame[data_frame["nom_station"]=="AIX ROY RENE"].index
+  data_frame.loc[row_Aix_Centre,"CLEE"]="AIXCEN"
+
+  row_Arles=data_frame[data_frame["nom_station"]=="Arles"].index
+  data_frame.loc[row_Arles,"CLEE"]="ARLS"
+
+  row_Arson=data_frame[data_frame["nom_station"]=="NICE ARSON"].index
+  data_frame.loc[row_Arson,"CLEE"]="ARSON"
+
+
+  row_Avi_Cen=data_frame[data_frame["nom_station"]=="AVIGNON   MAIRIE"].index
+  data_frame.loc[row_Avi_Cen,"CLEE"]="AVICEN"
+
+  row_Avi_Semard=data_frame[data_frame["nom_station"]=="Avignon Semard"].index
+  data_frame.loc[row_Avi_Semard,"CLEE"]="AVIMAR"
+
+  row_Cannes=data_frame[data_frame["nom_station"]=="CANNES BROUSSAILLES"].index
+  data_frame.loc[row_Cannes,"CLEE"]="CANNES"
+
+  row_Cinq_Avenue=data_frame[data_frame["nom_station"]=="MARSEILLE 5  AVENUES"].index
+  data_frame.loc[row_Cinq_Avenue,"CLEE"]="CINQAV"
+
+  row_Contes_2=data_frame[data_frame["nom_station"]=="CONTES 2"].index
+  data_frame.loc[row_Contes_2,"CLEE"]="CONTE2"
+
+
+  row_Esterel=data_frame[data_frame["nom_station"]=="ESTEREL"].index
+  data_frame.loc[row_Esterel,"CLEE"]="ESTEREL"
+
+  row_Fos_Carabins=data_frame[data_frame["nom_station"]=="Fos Les Carabins"].index
+  data_frame.loc[row_Fos_Carabins,"CLEE"]="FSCB"
+
+  row_Gap_Comm=data_frame[data_frame["nom_station"]=="GAP COMMANDERIE"].index
+  data_frame.loc[row_Gap_Comm,"CLEE"]="GAPCOM"
+
+  row_Gap_Jaures=data_frame[data_frame["nom_station"]=="GAP JEAN JAURES"].index
+  data_frame.loc[row_Gap_Jaures,"CLEE"]="GAPJAURES"
+
+  row_Gardanne=data_frame[data_frame["nom_station"]=="GARDANNE"].index
+  data_frame.loc[row_Gardanne,"CLEE"]="GARDAN"
+
+  row_Genoud=data_frame[data_frame["nom_station"]=="LA SEYNE GENOUD"].index
+  data_frame.loc[row_Genoud,"CLEE"]="GENOUD"
+
+  """vérifier Nice Magnan"""
+  row_Magnan=data_frame[data_frame["nom_station"]=="NICE PROMENADE"].index
+  data_frame.loc[row_Magnan,"CLEE"]="MAGNAN"
+
+  row_Manosque=data_frame[data_frame["nom_station"]=="MANOSQUE"].index
+  data_frame.loc[row_Manosque,"CLEE"]="MANOSQ"
+
+  row_Martigue_Ile=data_frame[data_frame["nom_station"]=="Martigues l'Ile"].index
+  data_frame.loc[row_Martigue_Ile,"CLEE"]="MILE"
+
+  row_Moulin_Antibes=data_frame[data_frame["nom_station"]=="ANTIBES JEAN MOULIN"].index
+  data_frame.loc[row_Moulin_Antibes,"CLEE"]="MOULIN"
+
+  row_Marigane_Ville=data_frame[data_frame["nom_station"]=="Marignane Ville"].index
+  data_frame.loc[row_Marigane_Ville,"CLEE"]="MRGV"
+
+  row_Aubagne_Passon=data_frame[data_frame["nom_station"]=="AUBAGNE LES PASSONS"].index
+  data_frame.loc[row_Aubagne_Passon,"CLEE"]="PASSON"
+
+  """vérifier"""
+  # row_Plombiere=data_frame[data_frame["nom_station"]=="AUBAGNE LES PASSONS"].index
+  # data_frame.loc[row_Plombiere,"CLEE"]="PLOMBI"
+
+  # row_Marignane=data_frame[data_frame["nom_station"]=="Marignane Ville"].index
+  # data_frame.loc[row_Marignane,"CLEE"]="MARIGNANE"
+
+  row_LePontet=data_frame[data_frame["nom_station"]=="LE PONTET"].index
+  data_frame.loc[row_LePontet,"CLEE"]="PONTET"
+
+  row_Marseille_Rabatau=data_frame[data_frame["nom_station"]=="MARSEILLE RABATAU"].index
+  data_frame.loc[row_Marseille_Rabatau,"CLEE"]="RABATA"
+
+  row_Salon=data_frame[data_frame["nom_station"]=="SALON"].index
+  data_frame.loc[row_Salon,"CLEE"]="SALON"
+
+  row_Marseille_ST_Louis=data_frame[data_frame["nom_station"]=="MARSEILLE ST LOUIS"].index
+  data_frame.loc[row_Marseille_ST_Louis,"CLEE"]="STLOUI"
+
+  row_Toulon_Claret=data_frame[data_frame["nom_station"]=="TOULON CLARET"].index
+  data_frame.loc[row_Toulon_Claret,"CLEE"]="TOUCLA"
+
+  row_Toulon_Foch=data_frame[data_frame["nom_station"]=="TOULON FOCH"].index
+  data_frame.loc[row_Toulon_Foch,"CLEE"]="TOUFOC"
+
+  row_Vitrolles=data_frame[data_frame["nom_station"]=="Vitrolles"].index
+  data_frame.loc[row_Vitrolles,"CLEE"]="VTRL"
+
+  row_Penne_Huveaune=data_frame[data_frame["nom_station"]=="VALLEE HUVEAUNE"].index
+  data_frame.loc[row_Penne_Huveaune,"CLEE"]="PENHUV"
+
+  row_Aix_Platanes=data_frame[data_frame["nom_station"]=="AIX PLATANES"].index
+  data_frame.loc[row_Aix_Platanes,"CLEE"]="AIXPLA"
+
+  row_Istres=data_frame[data_frame["nom_station"]=="Istres"].index
+  data_frame.loc[row_Istres,"CLEE"]="ISTR"
+
+  row_Sainte_Marie=data_frame[data_frame["nom_station"]=="Ste Maries de la Mer"].index
+  data_frame.loc[row_Sainte_Marie,"CLEE"]="SMMR"
+
+  row_Sausset_Pins=data_frame[data_frame["nom_station"]=="Sausset les Pins"].index
+  data_frame.loc[row_Sausset_Pins,"CLEE"]="SSLP"
+
+  row_Rognac_Brets=data_frame[data_frame["nom_station"]=="Rognac les Brets"].index
+  data_frame.loc[row_Rognac_Brets,"CLEE"]="RBRT"
+
+
+  row_Grasse_Clavecin=data_frame[data_frame["nom_station"]=="GRASSE CLAVECIN"].index
+  data_frame.loc[row_Grasse_Clavecin,"CLEE"]="GRASSE"
+
+  row_Nice_Botanique=data_frame[data_frame["nom_station"]=="NICE OUEST BOTANIQUE"].index
+  data_frame.loc[row_Nice_Botanique,"CLEE"]="BOTANI"
+
+  row_Cians=data_frame[data_frame["nom_station"]=="CIANS"].index
+  data_frame.loc[row_Cians,"CLEE"]="CIANS"
+
+  row_Cheiron=data_frame[data_frame["nom_station"]=="Cheiron"].index
+  data_frame.loc[row_Cheiron,"CLEE"]="CHEIRON"
+
+  row_Hyeres=data_frame[data_frame["nom_station"]=="HYERES"].index
+  data_frame.loc[row_Hyeres,"CLEE"]="HYERES"
+
+  row_Aups_Baume=data_frame[data_frame["nom_station"]=="PLAN AUPS/STE  BAUME"].index
+  data_frame.loc[row_Aups_Baume,"CLEE"]="AUPS"
+
+  row_Brignoles=data_frame[data_frame["nom_station"]=="BRIGNOLES"].index
+  data_frame.loc[row_Brignoles,"CLEE"]="BRIGNO"
+
+  row_Carpentras=data_frame[data_frame["nom_station"]=="CARPENTRAS"].index
+  data_frame.loc[row_Carpentras,"CLEE"]="CARPENTRAS"
+
+  row_Apt=data_frame[data_frame["nom_station"]=="APT"].index
+  data_frame.loc[row_Apt,"CLEE"]="APT"
+
+  row_Miramas_Centre=data_frame[data_frame["nom_station"]=="Miramas Centre Ville"].index
+  data_frame.loc[row_Miramas_Centre,"CLEE"]="MRMV"
+
+  row_Miramas_Centre=data_frame[data_frame["nom_station"]=="Miramas Centre Ville"].index
+  data_frame.loc[row_Miramas_Centre,"CLEE"]="MRMV"
+
+  row_Chateauneuf_Mede=data_frame[data_frame["nom_station"]=="Chateauneuf La Mede"].index
+  data_frame.loc[row_Chateauneuf_Mede,"CLEE"]="MEDE"
+
+  row_Peillon=data_frame[data_frame["nom_station"]=="PEILLON"].index
+  data_frame.loc[row_Peillon,"CLEE"]="PEILLO"
+
+  row_Port_St_Louis=data_frame[data_frame["nom_station"]=="Port Saint Louis"].index
+  data_frame.loc[row_Peillon,"CLEE"]="PSTL"
+
+  row_Obs_Haut_Prov=data_frame[data_frame["nom_station"]=="Obs Haute-Provence"].index
+  data_frame.loc[row_Obs_Haut_Prov,"CLEE"]="OHP"
+
+  row_Fos_Sur_Mer=data_frame[data_frame["nom_station"]=="Fos sur Mer"].index
+  data_frame.loc[row_Fos_Sur_Mer,"CLEE"]="FSMR"
+
+  row_Port_Bouc_Leque=data_frame[data_frame["nom_station"]=="Port de Bouc Leque"].index
+  data_frame.loc[row_Port_Bouc_Leque,"CLEE"]="PDBL"
+
+  row_Matigues_Couronne=data_frame[data_frame["nom_station"]=="Martigues  Couronne"].index
+  data_frame.loc[row_Matigues_Couronne,"CLEE"]="MCRN"
+
+  row_Matigues_Gatasse=data_frame[data_frame["nom_station"]=="Martigues La Gatasse"].index
+  data_frame.loc[row_Matigues_Gatasse,"CLEE"]="MGTS"
+
+  row_Matigues_Lavera=data_frame[data_frame["nom_station"]=="Martigues Lavera"].index
+  data_frame.loc[row_Matigues_Lavera,"CLEE"]="MLVR"
+
+  row_Matigues_Lavera=data_frame[data_frame["nom_station"]=="Martigues Lavera"].index
+  data_frame.loc[row_Matigues_Lavera,"CLEE"]="MLVR"
+  
