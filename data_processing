@@ -192,3 +192,39 @@ def create_key(data_frame):
   row_Matigues_Lavera=data_frame[data_frame["nom_station"]=="Martigues Lavera"].index
   data_frame.loc[row_Matigues_Lavera,"CLEE"]="MLVR"
   
+
+def create_threshold_values(data_frame):
+  """Cette fonction prend un dataframe et crée deux colonnes: une pour les valeurs limites, nommée [Seuils], pour chaque polluant; et l'autre nommée [typo_seuil]
+  spécifie le type de valeur seuil. Le nom de la colonne des polluants est [nom_poll]"""
+  rowBenz=data_frame[data_frame["nom_poll"]=="Benzène"].index
+  rowDioxy_soufre=data_frame[data_frame["nom_poll"]=="Dioxyde de soufre"].index
+  rowOzone=data_frame[data_frame["nom_poll"]=="Ozone"].index
+  rowDioxy_azote=data_frame[data_frame["nom_poll"]=="Dioxyde d'azote"].index
+  rowOxy_azote=data_frame[data_frame["nom_poll"]=="Oxydes d'azote"].index
+  rowPM10=data_frame[data_frame["nom_poll"]=="Particules PM10"].index
+  rowPM2_5=data_frame[data_frame["nom_poll"]=="Particules fines PM2,5"].index
+  rowMOno_carbone=data_frame[data_frame["nom_poll"]=="Monoxyde de carbone"].index
+
+  data_frame.loc[rowBenz,"Seuils"]=5                 #Valeur limite annuelle en microgramme/m3
+  data_frame.loc[rowBenz,"typo_seuil"]="Valeur limite annuelle"
+
+  data_frame.loc[rowDioxy_soufre,"Seuils"]=125       #Valeur limite journalière en microgramme/m3
+  data_frame.loc[rowDioxy_soufre,"typo_seuil"]="Valeur limite journalière"
+
+  data_frame.loc[rowOzone,"Seuils"]=120              #objectif de qualité journalier en microgramme/m3
+  data_frame.loc[rowOzone,"typo_seuil"]="objectif de qualité journalier"
+
+  data_frame.loc[rowDioxy_azote,"Seuils"]=40         #Valeur limite annuelle en microgramme/m3
+  data_frame.loc[rowDioxy_azote,"typo_seuil"]="Valeur limite annuelle"
+
+  data_frame.loc[rowOxy_azote,"Seuils"]=30           #Valeur limite annuelle en microgramme/m3
+  data_frame.loc[rowOxy_azote,"typo_seuil"]="Valeur limite annuelle"
+
+  data_frame.loc[rowPM10,"Seuils"]=125               #Seuil d'alerte journalière en microgramme/m3
+  data_frame.loc[rowPM10,"typo_seuil"]="Seuil d'alerte journalière"
+
+  data_frame.loc[rowPM2_5,"Seuils"]=30               #Valeur limite annuelle en microgramme/m3
+  data_frame.loc[rowPM2_5,"typo_seuil"]="Valeur limite annuelle" 
+
+  data_frame.loc[rowMOno_carbone,"Seuils"]=10000     #Valeur limite journalière en microgramme/m3
+  data_frame.loc[rowMOno_carbone,"typo_seuil"]="Valeur limite journalière"
