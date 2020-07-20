@@ -1,0 +1,246 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+import data_processing as dp
+
+
+"""Importation des données surla fenêtre clissante 2018-2020"""
+link="https://trouver.datasud.fr/dataset/4d554e03-dd52-409d-8bb4-59201067430f/resource/61e6befa-d21a-4462-a7bb-62be3a7647d8/download/mes_sudpaca_journalier.csv"
+dfPolluants=pd.read_csv(link)
+
+"""Importation des données 2015-2019"""
+polluants=["Monoxyde d'azote", "Dioxyde d'azote", "Oxydes d'azote", "Ozone", "Particules PM10", "Particules fines PM2,5", "Dioxyde de soufre", "1-3Butadiene", "O-Xylene", "M+PXylene", "Toluene", "Benzène"]
+df_2015_2019={}
+for p in polluants:
+   df_2015_2019[p]=pd.read_excel("https://github.com/raphaeljung/projet_qualite_air/blob/373bd374b5b8b102329a184aff4db2d3f6129160/200708_all_j_2015-2019.xlsx?raw=true", sheet_name=p, header=1)
+
+"""Importation des données météo"""
+link_meteo="https://public.opendatasoft.com/explore/dataset/donnees-synop-essentielles-omm/download/?format=csv&refine.nom_reg=Provence-Alpes-C%C3%B4te+d%27Azur&q=date%3E%3D%222014-12-31T23:00:00Z%22&timezone=Europe/Berlin&lang=fr&use_labels_for_header=true&csv_separator=%3B"
+dfMeteo = pd.read_csv(link_meteo, delimiter=";")
+dfMeteo["Date"]=pd.to_datetime(dfMeteo["Date"], utc=True)
+dfMeteo["Date"]=dfMeteo["Date"].dt.date
+dfMeteo= dfMeteo.sort_values(by=["Date"],ascending=True)
+df_daily=dfMeteo.groupby(["Date"]).mean()
+df_daily.reset_index(inplace=True)
+add_coor=["Pression au niveau mer", "Type de tendance barométrique", "Direction du vent moyen 10 mn", "Direction du vent moyen 10 mn", "Précipitations dans les 3 dernières heures", "Précipitations dans les 6 dernières heures", "Précipitations dans les 12 dernières heures", "Précipitations dans les 24 dernières heures","Température" ]
+df_daily.drop(columns=["Altitude","ID OMM station", "region (code)", "department (code)", "EPCI (code)", "communes (code)", "Latitude", "Longitude", "Température maximale sur 24 heures (°C)", "Température minimale sur 24 heures (°C)", "Température du thermomètre mouillé", "Température maximale sur 24 heures", "Température minimale sur 24 heures", "Niveau barométrique", "Méthode de mesure Température du thermomètre mouillé", "Hauteur de la neige fraîche","Periode de mesure de la neige fraiche","Phénomène spécial 1", "Phénomène spécial 2", "Phénomène spécial 3", "Phénomène spécial 4", "mois_de_l_annee", "Periode de mesure de la rafale"], inplace=True, axis=1)
+
+
+"""Formatage de dfPolluants"""
+
+dp.create_key(dfPolluants)
+dp.create_threshold_values(dfPolluants)
+dp.converting_microgramme(dfPolluants)
+dfPolluants["date_debut"]=pd.to_datetime(dfPolluants["date_debut"]).dt.date
+dfPolluants.sort_values(by="date_debut", ascending=True)
+dfPolluants.drop(["x_l93", "y_l93", "statut_valid", "insee_com"], axis=1, inplace=True)
+
+"""Création d'une df de jointure"""
+df_typo_influence=dfPolluants[["typologie", "influence", "CLEE"]]
+df_typo_influence.drop_duplicates(subset=['typologie', 'influence', "CLEE"], keep="first", inplace=True)
+
+
+"""Formattage des données 2015-2019"""
+for p in df_2015_2019:
+  #Suppression des colonnes non numériques
+  colonne_to_drop=df_2015_2019[p].select_dtypes(include=['object']).columns   
+  df_2015_2019[p].drop(columns=colonne_to_drop, axis=1, inplace=True)
+
+#   Reformattage du nom des colonnes       
+  df_2015_2019[p].columns=df_2015_2019[p].columns.str.replace(" ", "")
+
+#   Trie des df par ordre croissante en fonction de la date
+  df_2015_2019[p]= df_2015_2019[p].sort_values(by=["Dates"],ascending=True)
+
+# Mise en forme des df
+  df_2015_2019[p]=df_2015_2019[p].melt(id_vars='Dates', var_name='station', value_name='valeur')
+
+# Création d'un id pour chaque station
+  df_2015_2019[p]["id_station"]=df_2015_2019[p]["station"].str.rsplit("-", n=1, expand=True)[0]
+  
+# Jointure avec la df_typo_influence et calcul des moyennes en fonction de la typologie et de l'influence
+  df_2015_2019[p]=df_2015_2019[p].merge(df_typo_influence, how="left", left_on="id_station", right_on="CLEE")
+  df_2015_2019[p]=df_2015_2019[p].groupby(["Dates","typologie", "influence"]).agg("mean").reset_index()
+
+"""Décomposition en sous base de données"""
+df_2015_2019_typo={}
+for p in df_2015_2019:
+  for cause in df_2015_2019[p]["influence"].unique():
+    for typo in df_2015_2019[p]["typologie"].unique():
+      df_2015_2019_typo[(p, cause, typo)]=df_2015_2019[p][(df_2015_2019[p]["influence"]==cause) & (df_2015_2019[p]["typologie"]==typo)]
+
+for key in list(df_2015_2019_typo):
+  if len(df_2015_2019_typo[key])==0:
+    df_2015_2019_typo.pop(key)
+
+#liste des polluants non réglementés
+keys_NO=[("Monoxyde d'azote", 'fond', 'Périurbaine'), ("Monoxyde d'azote", 'fond', 'Urbaine'), ("Monoxyde d'azote", 'industrielle', 'Périurbaine'), ("Monoxyde d'azote", 'trafic', 'Urbaine')]
+keys_Butadiene=[('1-3Butadiene', 'industrielle', 'Périurbaine')]
+keys_M_PXylene=[('M+PXylene', 'industrielle', 'Périurbaine')]
+keys_OXylene=[('O-Xylene', 'industrielle', 'Périurbaine')]
+keys_Toluene=[('Toluene', 'industrielle', 'Périurbaine')]
+
+keys_NO2=[("Dioxyde d'azote", 'fond', 'Périurbaine'), ("Dioxyde d'azote", 'fond', 'Urbaine'), ("Dioxyde d'azote", 'industrielle', 'Périurbaine'), ("Dioxyde d'azote", 'trafic', 'Urbaine')]
+keys_NOx=[("Oxydes d'azote", 'fond', 'Périurbaine'), ("Oxydes d'azote", 'fond', 'Urbaine'), ("Oxydes d'azote", 'industrielle', 'Périurbaine'), ("Oxydes d'azote", 'trafic', 'Urbaine') ]
+keys_O3=[('Ozone', 'fond', 'Périurbaine'), ('Ozone', 'fond', 'Rurale'), ('Ozone', 'fond', 'Urbaine'),('Ozone', 'industrielle', 'Périurbaine')]
+keys_PM10=[('Particules PM10', 'fond', 'Périurbaine'), ('Particules PM10', 'fond', 'Rurale'), ('Particules PM10', 'fond', 'Urbaine'), ('Particules PM10', 'industrielle', 'Périurbaine'), ('Particules PM10', 'industrielle', 'Urbaine'), ('Particules PM10', 'trafic', 'Urbaine')]
+keys_PM2_5=[('Particules fines PM2,5', 'fond', 'Périurbaine'), ('Particules fines PM2,5', 'fond', 'Rurale'), ('Particules fines PM2,5', 'fond', 'Urbaine'), ('Particules fines PM2,5', 'industrielle', 'Périurbaine'), ('Particules fines PM2,5', 'industrielle', 'Urbaine'), ('Particules fines PM2,5', 'trafic', 'Urbaine')]
+keys_SO2=[('Dioxyde de soufre', 'industrielle', 'Périurbaine'), ('Dioxyde de soufre', 'industrielle', 'Urbaine'), ('Dioxyde de soufre', 'fond', 'Urbaine')]
+keys_Benzene=[('Benzène', 'industrielle', 'Périurbaine')]
+keys_CO=[('Monoxyde de carbone', 'fond', 'Urbaine')]
+
+"""Création des valeurs seuils pour les polluants réglementés"""
+for key in keys_NO2:
+  df_2015_2019_typo[key]["Seuils"]=40
+  df_2015_2019_typo[key]["typo_seuil"]="Valeur limite annuelle"
+
+for key in keys_NOx:
+  df_2015_2019_typo[key]["Seuils"]=30
+  df_2015_2019_typo[key]["typo_seuil"]="Valeur limite annuelle"
+
+for key in keys_O3:
+  df_2015_2019_typo[key]["Seuils"]=120
+  df_2015_2019_typo[key]["typo_seuil"]="objectif de qualité journalier"
+
+for key in keys_PM10:
+  df_2015_2019_typo[key]["Seuils"]=125
+  df_2015_2019_typo[key]["typo_seuil"]="Seuil d'alerte journalière"
+
+for key in keys_PM2_5:
+  df_2015_2019_typo[key]["Seuils"]=30
+  df_2015_2019_typo[key]["typo_seuil"]="Valeur limite annuelle" 
+
+for key in keys_SO2:
+  df_2015_2019_typo[key]["Seuils"]=125
+  df_2015_2019_typo[key]["typo_seuil"]="Valeur limite journalière"
+
+for key in keys_Benzene:
+  df_2015_2019_typo[key]["Seuils"]=5
+  df_2015_2019_typo[key]["typo_seuil"]="Valeur limite annuelle"  
+
+
+# df_2015_2019["Dioxyde d'azote"]["Seuils"]=40
+# df_2015_2019["Dioxyde d'azote"]["typo_seuil"]="Valeur limite annuelle"
+
+# df_2015_2019["Oxydes d'azote"]["Seuils"]=30
+# df_2015_2019["Oxydes d'azote"]["typo_seuil"]="Valeur limite annuelle"
+
+# df_2015_2019["Ozone"]["Seuils"]=120 
+# df_2015_2019["Ozone"]["typo_seuil"]="objectif de qualité journalier"
+
+# df_2015_2019["Particules PM10"]["Seuils"]=125
+# df_2015_2019["Particules PM10"]["typo_seuil"]="Seuil d'alerte journalière"
+
+# df_2015_2019["Particules fines PM2,5"]["Seuils"]=30 
+# df_2015_2019["Particules fines PM2,5"]["typo_seuil"]="Valeur limite annuelle" 
+
+# df_2015_2019["Dioxyde de soufre"]["Seuils"]=125
+# df_2015_2019["Dioxyde de soufre"]["typo_seuil"]="Valeur limite journalière"
+
+# df_2015_2019["Benzène"]["Seuils"]=5
+# df_2015_2019["Benzène"]["typo_seuil"]="Valeur limite annuelle"
+
+
+"""Aggrégation au niveau régional pour df_polluants et décomposition en sous base"""
+dfRegion=dfPolluants.groupby(["date_debut","id_poll_ue","nom_poll","typologie", "influence", "typo_seuil"]).agg("mean").reset_index()
+
+df={}
+for polluant in dfRegion["nom_poll"].unique():
+  for cause in dfRegion["influence"].unique():
+    for typo in dfRegion["typologie"].unique():
+      df[(polluant, cause, typo)]=dfRegion[(dfRegion["nom_poll"]==polluant) &  (dfRegion["influence"]==cause) & (dfRegion["typologie"]==typo)].reset_index()
+
+for key in list(df):
+  if len(df[key])==0:
+    df.pop(key)
+
+"""Concactenation des df"""
+
+Stard_date=pd.to_datetime("2019-12-31").date()
+mask_2020=df[("Oxydes d'azote", 'trafic', 'Urbaine')]["date_debut"]>Stard_date
+
+for key in df:
+  df[key]=df[key].loc[mask_2020]
+
+for key in df:
+  df[key].drop(columns=["index", "nom_poll","id_poll_ue" ], inplace=True)
+
+for key in df_2015_2019_typo:
+  df_2015_2019_typo[key].rename(columns={"Dates":"date_debut"}, inplace=True)
+
+for key in df_2015_2019_typo:
+      if key not in keys_NO+keys_Butadiene+keys_M_PXylene+keys_OXylene+keys_Toluene+keys_CO:
+        frames=[df_2015_2019_typo[key], df[key]]
+        df[key]=pd.concat(frames)
+
+"""Création des colonnes moyenne mobile et  variation saisonnière: Hypothèse d'additionnalité dans les variations saisonnières"""
+#Données sur la période 2015-2020
+for key in df:
+  df[key]["mois"]=pd.to_datetime(df[key]["date_debut"]).dt.month
+  df[key]["moy_mobile"]=df[key]["valeur"].rolling(7, center=True).mean()
+  df[key]["var_saison"]=df[key]["valeur"]-df[key]["moy_mobile"]
+  df[key]["var_saison_moy"]=df[key].groupby("mois")["var_saison"].transform(np.mean)
+  df[key]["CVS"]=df[key]["moy_mobile"]-df[key]["var_saison_moy"]
+
+#Données 2015-2019
+for key in df_2015_2019_typo:
+    if key in keys_NO+keys_Butadiene+keys_M_PXylene+keys_OXylene+keys_Toluene:
+        df_2015_2019_typo[key]["année"]=pd.to_datetime(df_2015_2019_typo[key]["date_debut"]).dt.year
+        df_2015_2019_typo[key]["mois"]=pd.to_datetime(df_2015_2019_typo[key]["date_debut"]).dt.month
+        df_2015_2019_typo[key]["moy_mobile"]=df_2015_2019_typo[key]["valeur"].rolling(7, center=True).mean()
+        df_2015_2019_typo[key]["var_saison"]=df_2015_2019_typo[key]["valeur"]-df_2015_2019_typo[key]["moy_mobile"]
+        df_2015_2019_typo[key]["var_saison_moy"]=df_2015_2019_typo[key].groupby("mois")["var_saison"].transform(np.mean)
+        df_2015_2019_typo[key]["CVS"]=df_2015_2019_typo[key]["moy_mobile"]-df_2015_2019_typo[key]["var_saison_moy"]
+        df_2015_2019_typo[key]["moyenne"]=df_2015_2019_typo[key].groupby("année")["valeur"].transform(np.mean)
+
+"""Visualisation"""
+keys_biais=[("Dioxyde d'azote", 'industrielle', 'Périurbaine'),("Oxydes d'azote", 'industrielle', 'Périurbaine'), ('Ozone', 'industrielle', 'Périurbaine'), ('Particules fines PM2,5', 'fond', 'Périurbaine'), ('Benzène', 'industrielle', 'Périurbaine')]
+
+for key in keys_NO:
+    dp.viz_unregulated(df_2015_2019_typo, key)
+for key in keys_OXylene:
+    dp.viz_unregulated(df_2015_2019_typo, key)
+
+for key in keys_Butadiene:
+    dp.viz_unregulated(df_2015_2019_typo, key)   
+
+for key in keys_M_PXylene:
+    dp.viz_unregulated(df_2015_2019_typo, key)
+
+for key in keys_OXylene:
+    dp.viz_unregulated(df_2015_2019_typo, key)
+
+for key in keys_Toluene:
+    dp.viz_unregulated(df_2015_2019_typo, key)
+
+for key in keys_NO2:
+    if key not in keys_biais:
+        dp.viz_regulated(df,key)
+
+for key in keys_NOx:
+    if key not in keys_biais:
+        dp.viz_regulated(df,key)
+
+for key in keys_O3:
+    if key not in keys_biais:
+        dp.viz_regulated(df,key)
+
+for key in keys_PM10:
+    if key not in keys_biais:
+        dp.viz_regulated(df,key)
+
+for key in keys_PM2_5:
+    if key not in keys_biais:
+        dp.viz_regulated(df,key)
+
+for key in keys_SO2:
+    if key not in keys_biais:
+        dp.viz_regulated(df,key)
+
+for key in keys_Benzene:
+    if key not in keys_biais:
+        dp.viz_regulated(df,key)
+
+for key in keys_CO:
+    if key not in keys_biais:
+        dp.viz_regulated(df,key)
