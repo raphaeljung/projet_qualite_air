@@ -119,28 +119,6 @@ for key in keys_Benzene:
   df_2015_2019_typo[key]["typo_seuil"]="Valeur limite annuelle"  
 
 
-# df_2015_2019["Dioxyde d'azote"]["Seuils"]=40
-# df_2015_2019["Dioxyde d'azote"]["typo_seuil"]="Valeur limite annuelle"
-
-# df_2015_2019["Oxydes d'azote"]["Seuils"]=30
-# df_2015_2019["Oxydes d'azote"]["typo_seuil"]="Valeur limite annuelle"
-
-# df_2015_2019["Ozone"]["Seuils"]=120 
-# df_2015_2019["Ozone"]["typo_seuil"]="objectif de qualité journalier"
-
-# df_2015_2019["Particules PM10"]["Seuils"]=125
-# df_2015_2019["Particules PM10"]["typo_seuil"]="Seuil d'alerte journalière"
-
-# df_2015_2019["Particules fines PM2,5"]["Seuils"]=30 
-# df_2015_2019["Particules fines PM2,5"]["typo_seuil"]="Valeur limite annuelle" 
-
-# df_2015_2019["Dioxyde de soufre"]["Seuils"]=125
-# df_2015_2019["Dioxyde de soufre"]["typo_seuil"]="Valeur limite journalière"
-
-# df_2015_2019["Benzène"]["Seuils"]=5
-# df_2015_2019["Benzène"]["typo_seuil"]="Valeur limite annuelle"
-
-
 """Aggrégation au niveau régional pour df_polluants et décomposition en sous base"""
 dfRegion=dfPolluants.groupby(["date_debut","id_poll_ue","nom_poll","typologie", "influence", "typo_seuil"]).agg("mean").reset_index()
 
