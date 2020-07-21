@@ -280,3 +280,39 @@ def viz_regulated(Dict, key):
         axs.get_xaxis().set_tick_params(labelsize=30)
         axs.get_yaxis().set_tick_params(labelsize=40)
     plt.show()
+    
+    
+def viz_regulated_nan(Dict, key):
+    """Cette fonction graphe l'évolution des polluants réglementés avec nan sur la période du confinement"""
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    DAYS=Dict[key]["date_debut"]
+    polluant=Dict[key]["CVS"]
+    seuil=Dict[key]["Seuils"]
+    typo=" ".join(Dict[key]["typo_seuil"].unique())
+    title="|".join(list(key))
+
+            
+    with plt.style.context('dark_background','presentation'):
+        fig, axs = plt.subplots(1, 1, figsize=(30,10), tight_layout=True)
+        
+        axs.plot(DAYS, polluant, c="b", ls="-", label="Moyenne mobile net VS")
+        axs.plot(DAYS, seuil, c="r", ls="--", label=typo)
+        axs.legend(loc="upper right", fontsize=22)
+        axs.set_title(title, fontsize=50)
+        axs.set_xlabel('Days', fontsize=30)
+        axs.set_ylabel('ug.m-3', fontsize=30)
+        axs.get_xaxis().set_tick_params(labelsize=30)
+        axs.get_yaxis().set_tick_params(labelsize=40)
+    plt.show()
+
+def dickey_fuller_test(serie):
+    """Cette fonction performe le test de Dickey et Fuller"""
+    from statsmodels.tsa.stattools import adfuller
+    result=adfuller(serie)
+    labels=["adf", "pValue", "usedlag", "nobs", "critical values"]
+    if result[1]<=0.05:
+      print("The hypothesis of unit root is rejected with pValue of ",result[1])
+    else:
+      print("There are a unit root with pValue of ",result[1])
+    
