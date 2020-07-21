@@ -2,17 +2,25 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import data_processing as dp
+import os
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+from sklearn.metrics import mean_absolute_error
 
+print("Importation des bibliothèques terminée\n")
 
 """Importation des données surla fenêtre clissante 2018-2020"""
 link="https://trouver.datasud.fr/dataset/4d554e03-dd52-409d-8bb4-59201067430f/resource/61e6befa-d21a-4462-a7bb-62be3a7647d8/download/mes_sudpaca_journalier.csv"
 dfPolluants=pd.read_csv(link)
+
+print("Importation des données dataSud terminée\n")
 
 """Importation des données 2015-2019"""
 polluants=["Monoxyde d'azote", "Dioxyde d'azote", "Oxydes d'azote", "Ozone", "Particules PM10", "Particules fines PM2,5", "Dioxyde de soufre", "1-3Butadiene", "O-Xylene", "M+PXylene", "Toluene", "Benzène"]
 df_2015_2019={}
 for p in polluants:
    df_2015_2019[p]=pd.read_excel("https://github.com/raphaeljung/projet_qualite_air/blob/373bd374b5b8b102329a184aff4db2d3f6129160/200708_all_j_2015-2019.xlsx?raw=true", sheet_name=p, header=1)
+
+print("Importation des données 2015-2019 terminée\n")
 
 """Importation des données météo"""
 link_meteo="https://public.opendatasoft.com/explore/dataset/donnees-synop-essentielles-omm/download/?format=csv&refine.nom_reg=Provence-Alpes-C%C3%B4te+d%27Azur&q=date%3E%3D%222014-12-31T23:00:00Z%22&timezone=Europe/Berlin&lang=fr&use_labels_for_header=true&csv_separator=%3B"
@@ -22,9 +30,11 @@ dfMeteo["Date"]=dfMeteo["Date"].dt.date
 dfMeteo= dfMeteo.sort_values(by=["Date"],ascending=True)
 df_daily=dfMeteo.groupby(["Date"]).mean()
 df_daily.reset_index(inplace=True)
-add_coor=["Pression au niveau mer", "Type de tendance barométrique", "Direction du vent moyen 10 mn", "Direction du vent moyen 10 mn", "Précipitations dans les 3 dernières heures", "Précipitations dans les 6 dernières heures", "Précipitations dans les 12 dernières heures", "Précipitations dans les 24 dernières heures","Température" ]
 df_daily.drop(columns=["Altitude","ID OMM station", "region (code)", "department (code)", "EPCI (code)", "communes (code)", "Latitude", "Longitude", "Température maximale sur 24 heures (°C)", "Température minimale sur 24 heures (°C)", "Température du thermomètre mouillé", "Température maximale sur 24 heures", "Température minimale sur 24 heures", "Niveau barométrique", "Méthode de mesure Température du thermomètre mouillé", "Hauteur de la neige fraîche","Periode de mesure de la neige fraiche","Phénomène spécial 1", "Phénomène spécial 2", "Phénomène spécial 3", "Phénomène spécial 4", "mois_de_l_annee", "Periode de mesure de la rafale"], inplace=True, axis=1)
+df_daily.fillna(method="backfill", inplace=True)
+df_daily.fillna(method="ffill", inplace=True)
 
+print("Importation des données météo terminée\n")
 
 """Formatage de dfPolluants"""
 
@@ -35,16 +45,20 @@ dfPolluants["date_debut"]=pd.to_datetime(dfPolluants["date_debut"]).dt.date
 dfPolluants.sort_values(by="date_debut", ascending=True)
 dfPolluants.drop(["x_l93", "y_l93", "statut_valid", "insee_com"], axis=1, inplace=True)
 
+print("Formatage de dfPolluants terminé\n")
+
 """Création d'une df de jointure"""
 df_typo_influence=dfPolluants[["typologie", "influence", "CLEE"]]
 df_typo_influence.drop_duplicates(subset=['typologie', 'influence', "CLEE"], keep="first", inplace=True)
 
+print("Création d'une df de jointure terminée\n")
 
 """Formattage des données 2015-2019"""
 for p in df_2015_2019:
   #Suppression des colonnes non numériques
   colonne_to_drop=df_2015_2019[p].select_dtypes(include=['object']).columns   
   df_2015_2019[p].drop(columns=colonne_to_drop, axis=1, inplace=True)
+
 
 #   Reformattage du nom des colonnes       
   df_2015_2019[p].columns=df_2015_2019[p].columns.str.replace(" ", "")
@@ -62,6 +76,8 @@ for p in df_2015_2019:
   df_2015_2019[p]=df_2015_2019[p].merge(df_typo_influence, how="left", left_on="id_station", right_on="CLEE")
   df_2015_2019[p]=df_2015_2019[p].groupby(["Dates","typologie", "influence"]).agg("mean").reset_index()
 
+print("Formattage des données 2015-2019 terminé")
+
 """Décomposition en sous base de données"""
 df_2015_2019_typo={}
 for p in df_2015_2019:
@@ -73,13 +89,16 @@ for key in list(df_2015_2019_typo):
   if len(df_2015_2019_typo[key])==0:
     df_2015_2019_typo.pop(key)
 
-#liste des polluants non réglementés
+print("Décomposition en sous base de données terminée")
+
+#liste des keys de polluants non réglementés
 keys_NO=[("Monoxyde d'azote", 'fond', 'Périurbaine'), ("Monoxyde d'azote", 'fond', 'Urbaine'), ("Monoxyde d'azote", 'industrielle', 'Périurbaine'), ("Monoxyde d'azote", 'trafic', 'Urbaine')]
 keys_Butadiene=[('1-3Butadiene', 'industrielle', 'Périurbaine')]
 keys_M_PXylene=[('M+PXylene', 'industrielle', 'Périurbaine')]
 keys_OXylene=[('O-Xylene', 'industrielle', 'Périurbaine')]
 keys_Toluene=[('Toluene', 'industrielle', 'Périurbaine')]
 
+#Liste des keys des polluants réglementés
 keys_NO2=[("Dioxyde d'azote", 'fond', 'Périurbaine'), ("Dioxyde d'azote", 'fond', 'Urbaine'), ("Dioxyde d'azote", 'industrielle', 'Périurbaine'), ("Dioxyde d'azote", 'trafic', 'Urbaine')]
 keys_NOx=[("Oxydes d'azote", 'fond', 'Périurbaine'), ("Oxydes d'azote", 'fond', 'Urbaine'), ("Oxydes d'azote", 'industrielle', 'Périurbaine'), ("Oxydes d'azote", 'trafic', 'Urbaine') ]
 keys_O3=[('Ozone', 'fond', 'Périurbaine'), ('Ozone', 'fond', 'Rurale'), ('Ozone', 'fond', 'Urbaine'),('Ozone', 'industrielle', 'Périurbaine')]
@@ -104,7 +123,7 @@ for key in keys_O3:
 
 for key in keys_PM10:
   df_2015_2019_typo[key]["Seuils"]=125
-  df_2015_2019_typo[key]["typo_seuil"]="Seuil d'alerte journalière"
+  df_2015_2019_typo[key]["typo_seuil"]="Seuil d'alerte journalier"
 
 for key in keys_PM2_5:
   df_2015_2019_typo[key]["Seuils"]=30
@@ -112,16 +131,18 @@ for key in keys_PM2_5:
 
 for key in keys_SO2:
   df_2015_2019_typo[key]["Seuils"]=125
-  df_2015_2019_typo[key]["typo_seuil"]="Valeur limite journalière"
+  df_2015_2019_typo[key]["typo_seuil"]="Valeur limite journalier"
 
 for key in keys_Benzene:
   df_2015_2019_typo[key]["Seuils"]=5
   df_2015_2019_typo[key]["typo_seuil"]="Valeur limite annuelle"  
 
+print("Création des valeurs seuils pour les polluants réglémentés\n")
+
 
 """Aggrégation au niveau régional pour df_polluants et décomposition en sous base"""
-dfRegion=dfPolluants.groupby(["date_debut","id_poll_ue","nom_poll","typologie", "influence", "typo_seuil"]).agg("mean").reset_index()
 
+dfRegion=dfPolluants.groupby(["date_debut","id_poll_ue","nom_poll","typologie", "influence", "typo_seuil"]).agg("mean").reset_index()
 df={}
 for polluant in dfRegion["nom_poll"].unique():
   for cause in dfRegion["influence"].unique():
@@ -132,13 +153,16 @@ for key in list(df):
   if len(df[key])==0:
     df.pop(key)
 
+print("Aggrégation par influence et par typologie terminée\n")
+
 """Concactenation des df"""
 
 Stard_date=pd.to_datetime("2019-12-31").date()
 mask_2020=df[("Oxydes d'azote", 'trafic', 'Urbaine')]["date_debut"]>Stard_date
 
 for key in df:
-  df[key]=df[key].loc[mask_2020]
+  if key not in keys_CO: 
+    df[key]=df[key].loc[mask_2020]
 
 for key in df:
   df[key].drop(columns=["index", "nom_poll","id_poll_ue" ], inplace=True)
@@ -150,6 +174,8 @@ for key in df_2015_2019_typo:
       if key not in keys_NO+keys_Butadiene+keys_M_PXylene+keys_OXylene+keys_Toluene+keys_CO:
         frames=[df_2015_2019_typo[key], df[key]]
         df[key]=pd.concat(frames)
+
+print("Concacténation des df terminée\n")
 
 """Création des colonnes moyenne mobile et  variation saisonnière: Hypothèse d'additionnalité dans les variations saisonnières"""
 #Données sur la période 2015-2020
@@ -171,54 +197,165 @@ for key in df_2015_2019_typo:
         df_2015_2019_typo[key]["CVS"]=df_2015_2019_typo[key]["moy_mobile"]-df_2015_2019_typo[key]["var_saison_moy"]
         df_2015_2019_typo[key]["moyenne"]=df_2015_2019_typo[key].groupby("année")["valeur"].transform(np.mean)
 
+print("Calcul des moyennes terminé\n")
+
 """Visualisation"""
+
 keys_biais=[("Dioxyde d'azote", 'industrielle', 'Périurbaine'),("Oxydes d'azote", 'industrielle', 'Périurbaine'), ('Ozone', 'industrielle', 'Périurbaine'), ('Particules fines PM2,5', 'fond', 'Périurbaine'), ('Benzène', 'industrielle', 'Périurbaine')]
+keys_nan=[('Particules fines PM2,5', 'fond', 'Périurbaine'),('Particules fines PM2,5', 'industrielle', 'Périurbaine')]
 
 for key in keys_NO:
     dp.viz_unregulated(df_2015_2019_typo, key)
+   
+
 for key in keys_OXylene:
     dp.viz_unregulated(df_2015_2019_typo, key)
+ 
 
 for key in keys_Butadiene:
-    dp.viz_unregulated(df_2015_2019_typo, key)   
+    dp.viz_unregulated(df_2015_2019_typo, key)
+     
 
 for key in keys_M_PXylene:
     dp.viz_unregulated(df_2015_2019_typo, key)
+    
 
 for key in keys_OXylene:
     dp.viz_unregulated(df_2015_2019_typo, key)
+   
 
 for key in keys_Toluene:
     dp.viz_unregulated(df_2015_2019_typo, key)
+    
 
 for key in keys_NO2:
     if key not in keys_biais:
         dp.viz_regulated(df,key)
-
+        
 for key in keys_NOx:
     if key not in keys_biais:
         dp.viz_regulated(df,key)
+      
 
 for key in keys_O3:
     if key not in keys_biais:
         dp.viz_regulated(df,key)
+     
 
 for key in keys_PM10:
     if key not in keys_biais:
         dp.viz_regulated(df,key)
+        
 
 for key in keys_PM2_5:
-    if key not in keys_biais:
+    if key not in keys_biais+keys_nan:
         dp.viz_regulated(df,key)
+        
 
 for key in keys_SO2:
     if key not in keys_biais:
         dp.viz_regulated(df,key)
+      
 
 for key in keys_Benzene:
     if key not in keys_biais:
         dp.viz_regulated(df,key)
+       
 
 for key in keys_CO:
     if key not in keys_biais:
         dp.viz_regulated(df,key)
+       
+
+for key in keys_nan:
+    if key not in keys_biais:
+        dp.viz_regulated_nan(df,key)
+
+print("Visualisation terminée\n") 
+
+"""Machine learning"""
+
+print("Test de DF sur les variables exogènes")
+
+list_I=[]
+for col in df_daily.columns:
+   if col!="Date":
+    print(col)
+    df_daily[col]=df_daily[col].diff(1)
+    dp.dickey_fuller_test(df_daily[col].dropna())
+    list_I.append(col)
+    print()      
+
+
+NOx_trafic=df[("Oxydes d'azote", 'trafic', 'Urbaine')]
+NOx_trafic["Jour_semaine"]=pd.to_datetime(NOx_trafic["date_debut"]).dt.dayofweek
+NOx_trafic["mois"]=pd.to_datetime(NOx_trafic["date_debut"]).dt.month
+NOx_trafic=pd.get_dummies(NOx_trafic, columns=["Jour_semaine"])
+NOx_trafic=pd.get_dummies(NOx_trafic, columns=["mois"])
+NOx_trafic["taux_variation"]=np.log(NOx_trafic["valeur"]).diff(1)
+NOx_trafic.sort_values(by="date_debut", ascending=True, inplace=True)
+NOx_trafic.reset_index(inplace=True)
+
+#création de dummy pour les valeurs abérantes
+valeur_ab=NOx_trafic["valeur"].quantile(q=0.99)
+row_valeur_ab=NOx_trafic[NOx_trafic["valeur"]>valeur_ab].index
+row_valeur_nab=NOx_trafic[NOx_trafic["valeur"]<=valeur_ab].index
+NOx_trafic.loc[row_valeur_ab,"Valeur_ab"]=1
+NOx_trafic.loc[row_valeur_nab,"Valeur_ab"]=0
+
+#Merge de NOx_trafic et df_daily
+df_daily["Date"]=pd.to_datetime(df_daily["Date"])
+NOx_trafic["date_debut"]=pd.to_datetime(NOx_trafic["date_debut"])
+NOx_serie2=NOx_trafic.merge(df_daily, how="left", left_on="date_debut", right_on="Date")
+NOx_serie2=NOx_serie2.dropna()
+NOx_serie2.reset_index(inplace=True)
+
+#Définition des dataset train et test
+y1=NOx_serie2["taux_variation"]
+X1=NOx_serie2[list_I+["Valeur_ab", "Jour_semaine_0", "Jour_semaine_1", "Jour_semaine_2", "Jour_semaine_3", "Jour_semaine_4", "Jour_semaine_5", "mois_1", "mois_2", "mois_3", "mois_4", "mois_5", "mois_6", "mois_7", "mois_8", "mois_9", "mois_10", "mois_11"]]
+
+size = int(len(X1) * 0.8)
+X1_train, X1_test = X1[0:size], X1[size:len(X1)]
+y1_train, y1_test = y1[0:size], y1[size:len(y1)]
+
+print(X1_train.shape, X1_test.shape, y1_train.shape, y1_test.shape)
+print()
+
+
+model = SARIMAX(y1_train, order=(1,0,7),trend="t", exog=X1_train)
+model1_fit = model.fit(disp=False, cov_type="robust")
+
+print(model1_fit.summary(), "\n")
+
+#Evaluation du modèle
+NOx_serie2["predict1"]=model1_fit.predict(start=size, end=(len(X1)-1), dynamic=True, exog=X1_test )
+y_predict1=NOx_serie2["predict1"].dropna()
+MAE1=mean_absolute_error(y1_test,y_predict1)
+
+print("L'erreur moyen du modèle simple est de: ", round(MAE1,2),"\n")
+
+DAYS=NOx_serie2[size:]["date_debut"]
+DAYS1= NOx_serie2[size:]["date_debut"]
+polluant=NOx_serie2[size:]["taux_variation"]
+polluant1=NOx_serie2[size:]["predict1"]
+
+          
+with plt.style.context('dark_background','presentation'):
+  fig, axs = plt.subplots(1, 1, figsize=(30,10), tight_layout=True)
+    
+  axs.plot(DAYS, polluant, c="b", ls="-", label="Observé")
+  axs.plot(DAYS1, polluant1, c="y", ls="--", label="Prédiction")
+  
+  axs.legend(loc="upper right", fontsize=22)
+  axs.set_title("Evaluation", fontsize=50)
+  axs.set_xlabel('Days', fontsize=30)
+  axs.set_ylabel('ug.m-3', fontsize=30)
+  axs.get_xaxis().set_tick_params(labelsize=30)
+  axs.get_yaxis().set_tick_params(labelsize=40)
+      
+
+  plt.show()  
+
+print ("Fin")
+
+
